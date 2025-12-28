@@ -1,1 +1,472 @@
+Terry, [28.12.2025 14:31]
+<div class="mono" id="guidesBox"></div>
+      <div class="btnRow">
+        <button class="btnGhost" id="btnBack">НАЗАД</button>
+      </div>
+    </div>
 
+    <div class="footerNote" id="footerNote">
+      ПРИМЕЧАНИЕ: Mini App очищает только локальные данные этого Mini App (кэш/временные данные) и показывает рекомендации по памяти/сети.
+    </div>
+  </div>
+
+  <script>
+    const tg = window.Telegram?.WebApp;
+    if (tg) { tg.ready(); try { tg.expand(); } catch (_) {} }
+
+    const I18N = {
+      ru: {
+        LANG_LABEL:"Язык",
+        READY:"ГОТОВО",
+        LOADING_AD:"ЗАГРУЗКА РЕКЛАМЫ…",
+        RUNNING:"ВЫПОЛНЕНИЕ…",
+        REPORT_READY:"ОТЧЁТ ГОТОВ",
+        RUN_AGAIN:"ПОВТОРИТЬ (РЕКЛАМА)",
+        OPEN_GUIDES:"ОТКРЫТЬ ГАЙДЫ",
+        BACK:"НАЗАД",
+        NOTE:"ПРИМЕЧАНИЕ: Mini App очищает только локальные данные этого Mini App (кэш/временные данные) и показывает рекомендации по памяти/сети.",
+        GUIDE_TEXT:
+`• Telegram: Настройки → Данные и память → Использование памяти → Очистить кэш.
+• Держи свободными 10–15% памяти.
+• Wi-Fi обычно стабильнее. Если лагает — проверь latency и перезапусти сеть.`,
+        DEVICE:"УСТРОЙСТВО",
+        NETWORK:"СЕТЬ",
+        STORAGE:"ПАМЯТЬ",
+        CLEANUP:"ОЧИСТКА",
+        STATUS:"СТАТУС",
+        CHECKLIST:"ЧЕК-ЛИСТ",
+        BEFORE:"до",
+        UNKNOWN:"н/д",
+      },
+      en: {
+        LANG_LABEL:"Language",
+        READY:"READY",
+        LOADING_AD:"LOADING AD…",
+        RUNNING:"RUNNING…",
+        REPORT_READY:"REPORT READY",
+        RUN_AGAIN:"RUN AGAIN (AD)",
+        OPEN_GUIDES:"OPEN GUIDES",
+        BACK:"BACK",
+        NOTE:"NOTE: This Mini App clears only local data created inside this Mini App (cache/temp) and provides storage/network guidance.",
+        GUIDE_TEXT:
+`• Telegram: Settings → Data and Storage → Storage Usage → Clear cache.
+• Keep 10–15% free storage.
+• Wi-Fi is usually more stable. If it lags — check latency and restart network.`,
+        DEVICE:"DEVICE",
+        NETWORK:"NETWORK",
+        STORAGE:"STORAGE",
+        CLEANUP:"CLEANUP",
+        STATUS:"STATUS",
+        CHECKLIST:"CHECKLIST",
+        BEFORE:"before",
+        UNKNOWN:"n/a",
+      },
+      zh: {
+        LANG_LABEL:"语言",
+        READY:"就绪",
+        LOADING_AD:"广告加载中…",
+        RUNNING:"处理中…",
+        REPORT_READY:"报告已生成",
+        RUN_AGAIN:"再次运行（广告）",
+        OPEN_GUIDES:"打开指南",
+        BACK:"返回",
+        NOTE:"说明：本 Mini App 仅清理本应用产生的本地缓存/临时数据，并提供存储/网络建议。",
+        GUIDE_TEXT:
+`• Telegram：设置 → 数据与存储 → 存储使用情况 → 清理缓存。
+• 建议保留 10–15% 可用空间。
+• Wi-Fi 通常更稳定；卡顿时可查看延迟并重启网络。`,
+        DEVICE:"设备",
+        NETWORK:"网络",
+        STORAGE:"存储",
+        CLEANUP:"清理",
+        STATUS:"状态",
+        CHECKLIST:"检查清单",
+        BEFORE:"之前",
+        UNKNOWN:"未知",
+      }
+    };
+
+    function getSavedLang(){ const v=localStorage.getItem("scr_lang"); return (v && I18N[v]) ? v : "ru"; }
+    let LANG = getSavedLang();
+    function t(k){ return (I18N[LANG] && I18N[LANG][k])  I18N.en[k]  k; }
+
+    function applyI18n(){
+      document.getElementById("lblLang").innerText=t("LANG_LABEL");
+      document.getElementById("statusText").innerText=t("READY");
+      document.getElementById("btnRunAgain").innerText=t("RUN_AGAIN");
+      document.getElementById("btnGuides").innerText=t("OPEN_GUIDES");
+      document.getElementById("btnBack").innerText=t("BACK");
+      document.getElementById("footerNote").innerText=t("NOTE");
+      document.getElementById("hdrGuides").innerText=(LANG==="en"?"GUIDES":(LANG==="zh"?"指南":"ГАЙДЫ"));
+    }
+
+    function getOrCreateAppId(){
+      const k="scr_app_device_id"; let v=localStorage.getItem(k);
+      if(!v){ v=(crypto?.randomUUID?crypto.randomUUID():String(Date.now())+"-"+Math.random().toString(16).slice(2)); localStorage.setItem(k,v); }
+      return v;
+    }
+
+    // In-app cache only (demo but honest)
+    const CACHE_PREFIX="scr_cache_", META_LAST_CLEAN="scr_last_clean_ts", META_RUN_TODAY="scr_runs_today";
+    function bytesToMB(b){ return Math.max(0,b)/(1024*1024); }
+    function approximateLocalStorageBytes(){
+      let total=0;
+      for(let i=0;i<localStorage.length;i++){
+
+Terry, [28.12.2025 14:31]
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>SCR</title>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #000;
+      color: #fff;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+    .wrap { min-height: 100vh; display: flex; flex-direction: column; padding: 18px 18px 16px; gap: 12px; }
+    .title { font-size: 14px; opacity: 0.95; letter-spacing: 0.12em; font-weight: 900; }
+    .subtitle { font-size: 11px; opacity: 0.75; letter-spacing: 0.10em; margin-top: 4px; }
+    .rule { opacity: 0.25; margin: 8px 0 2px; user-select: none; white-space: nowrap; overflow: hidden; }
+    .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .small { font-size: 12px; opacity: 0.8; line-height: 1.45; }
+    .mono { white-space: pre-wrap; word-break: break-word; font-size: 12px; opacity: 0.92; line-height: 1.55; }
+
+    select, button {
+      font-family: inherit; font-size: 12px; border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.25); background: #000; color: #fff; padding: 9px 10px;
+    }
+    .center { flex: 1; display: flex; align-items: center; justify-content: center; padding: 6px 0; }
+    .btnWrap { text-align: center; }
+    .toggle {
+      width: 170px; height: 170px; border-radius: 999px;
+      background: #fff; color: #000; border: 3px solid #111;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; letter-spacing: 0.14em; user-select: none; cursor: pointer;
+    }
+    .toggle:active { transform: scale(0.985); }
+    .status { margin-top: 10px; font-size: 12px; opacity: 0.92; letter-spacing: 0.06em; }
+
+    .panel {
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 14px;
+      padding: 12px;
+      background: rgba(255,255,255,0.03);
+    }
+    .panel h3 { margin: 0 0 8px; font-size: 12px; opacity: 0.95; letter-spacing: 0.10em; font-weight: 800; }
+    .btnRow { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+    .btnGhost { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.25); }
+
+    .pill {
+      display: inline-block; padding: 4px 8px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.22); font-size: 11px; opacity: 0.9; letter-spacing: 0.06em;
+    }
+    .footerNote { font-size: 11px; opacity: 0.65; line-height: 1.4; }
+    .hidden { display: none; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div>
+      <div class="row">
+        <div>
+          <div class="title">SCR</div>
+          <div class="subtitle">Security Creator Report</div>
+        </div>
+        <div class="row" style="gap:10px;">
+          <span class="pill" id="pillEnv">ENV: ?</span>
+          <span class="pill" id="pillNet">NET: LOCKED</span>
+          <label class="small" id="lblLang">Язык</label>
+          <select id="lang">
+            <option value="ru">Русский</option>
+            <option value="en">English</option>
+            <option value="zh">中文</option>
+          </select>
+        </div>
+      </div>
+      <div class="rule">────────────────────────────────────────────────────────────</div>
+      <div class="mono" id="deviceBox"></div>
+    </div>
+
+    <div class="center">
+      <div class="btnWrap">
+        <div class="toggle" id="toggleBtn">OFF</div>
+        <div class="status" id="statusText">ГОТОВО</div>
+      </div>
+    </div>
+
+    <div class="panel hidden" id="reportPanel">
+      <h3 id="hdrReport">SCR REPORT</h3>
+      <div class="mono" id="reportBox"></div>
+      <div class="btnRow">
+        <button id="btnRunAgain">ПОВТОРИТЬ (РЕКЛАМА)</button>
+        <button class="btnGhost" id="btnGuides">ОТКРЫТЬ ГАЙДЫ</button>
+      </div>
+    </div>
+
+    <div class="panel hidden" id="guidesPanel">
+      <h3 id="hdrGuides">ГАЙДЫ</h3>
+
+Terry, [28.12.2025 14:31]
+const k=localStorage.key(i), v=localStorage.getItem(k);
+        if(k && v && k.startsWith(CACHE_PREFIX)) total += (k.length+v.length)*2;
+      }
+      return total;
+    }
+    function fillCacheToMinimum(minMB){
+      const cur=bytesToMB(approximateLocalStorageBytes());
+      if(cur>=minMB) return;
+      const needBytes=Math.max(0,(minMB-cur)*1024*1024);
+      const chunk="X".repeat(20000);
+      let written=0, idx=0;
+      while(written<needBytes && idx<400){
+        try{
+          const key=CACHE_PREFIX+Date.now()+"_"+idx;
+          localStorage.setItem(key, chunk+idx);
+          written += (key.length+chunk.length+String(idx).length)*2;
+          idx++;
+        }catch(_){ break; }
+      }
+    }
+    function simulateTempBytes(){
+      const b=Math.floor((0.2+Math.random()*1.2)*1024*1024);
+      localStorage.setItem("scr_temp_bytes", String(b));
+      return b;
+    }
+    function clearCacheAndTemp(){
+      let cleared=0; const keys=[];
+      for(let i=0;i<localStorage.length;i++){
+        const k=localStorage.key(i);
+        if(k && k.startsWith(CACHE_PREFIX)) keys.push(k);
+      }
+      for(const k of keys){
+        const v=localStorage.getItem(k)||"";
+        cleared += (k.length+v.length)*2;
+        localStorage.removeItem(k);
+      }
+      const temp=Number(localStorage.getItem("scr_temp_bytes")||"0");
+      localStorage.setItem("scr_temp_bytes","0");
+      localStorage.setItem(META_LAST_CLEAN, String(Date.now()));
+      return { clearedBytes: cleared, tempBytes: temp };
+    }
+    function daysSinceLastClean(){
+      const ts=Number(localStorage.getItem(META_LAST_CLEAN)||"0");
+      if(!ts) return null;
+      return Math.floor((Date.now()-ts)/(1000*60*60*24));
+    }
+    function incRunsToday(){
+      const d=new Date(), day=`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+      let obj={day,n:0};
+      try{ const s=localStorage.getItem(META_RUN_TODAY); if(s) obj=JSON.parse(s); }catch(_){}
+      if(obj.day!==day) obj={day,n:0};
+      obj.n+=1;
+      localStorage.setItem(META_RUN_TODAY, JSON.stringify(obj));
+      return obj.n;
+    }
+
+    // Network checks: public IP + latency to your domain (ping.txt)
+    async function fetchPublicIP(){
+      try{
+        const r=await fetch("https://api.ipify.org?format=json",{cache:"no-store"});
+        const j=await r.json();
+        return j?.ip || null;
+      }catch(_){ return null; }
+    }
+    async function measureLatencyMs(trials=3){
+      const times=[];
+      for(let i=0;i<trials;i++){
+        const url=`${location.origin}/ping.txt?cb=${Date.now()}_${i}`;
+        const t0=performance.now();
+        try{
+          await fetch(url,{cache:"no-store"});
+          const t1=performance.now();
+          times.push(t1-t0);
+        }catch(_){
+          return null;
+        }
+      }
+      return Math.round(times.reduce((a,b)=>a+b,0)/times.length);
+    }
+
+    function computeScoreAndIssues({appCacheMB, daysNoClean, runsToday, latencyMs, ipOk}){
+      const issues=[];
+      if(appCacheMB>=0.4) issues.push("APP_CACHE_HIGH");
+      if(appCacheMB>=0.8) issues.push("APP_CACHE_CRITICAL");
+      if(daysNoClean===null) issues.push("NO_CLEAN_HISTORY");
+      else { if(daysNoClean>=7) issues.push("NO_CLEAN_7D"); if(daysNoClean>=14) issues.push("NO_CLEAN_14D"); }
+      if(runsToday>=3) issues.push("FREQUENT_RUNS");
+      if(latencyMs===null) issues.push("LATENCY_UNKNOWN");
+      else { if(latencyMs>=350) issues.push("LATENCY_HIGH"); if(latencyMs>=800) issues.push("LATENCY_CRITICAL"); }
+      if(!ipOk) issues.push("IP_UNKNOWN");
+
+      let Pcache=0;
+      if(appCacheMB<0.15) Pcache=0; else if(appCacheMB<0.40) Pcache=10; else if(appCacheMB<0.80) Pcache=18; else Pcache=25;
+      let Pdays=0;
+      if(daysNoClean===null) Pdays=6; else if(daysNoClean<2) Pdays=0; else if(daysNoClean<7) Pdays=5; else if(daysNoClean<14) Pdays=10; else Pdays=15;
+      let Plat=0;
+      if(latencyMs===null) Plat=6; else if(latencyMs<120) Plat=0; else if(latencyMs<350) Plat=5; else if(latencyMs<800) Plat=10; else Plat=15;
+      let Pissues=0;
+      const n=issues.length;
+
+Terry, [28.12.2025 14:31]
+if(n<=1) Pissues=0; else if(n<=3) Pissues=4; else if(n<=5) Pissues=7; else Pissues=10;
+
+      const score=Math.max(0, Math.min(100, Math.round(100 - Pcache - Pdays - Plat - Pissues)));
+      return {score, issues};
+    }
+
+    function renderDeviceBox(){
+      const appId=getOrCreateAppId();
+      const platform=tg?.platform || "unknown";
+      const version=tg?.version || "unknown";
+      const scheme=tg?.colorScheme || "dark";
+      const user=tg?.initDataUnsafe?.user;
+
+      document.getElementById("pillEnv").innerText=`ENV: TMA/${platform}`;
+      document.getElementById("pillNet").innerText=`NET: LOCKED`;
+
+      const tgId = user?.id ? String(user.id) : t("UNKNOWN");
+      const tgUser = user?.username ? ("@" + user.username) : t("UNKNOWN");
+
+      const lines=[
+        ${t("DEVICE")},
+        tg_id: ${tgId},
+        tg_username: ${tgUser},
+        platform: ${platform},
+        tg_version: ${version},
+        theme: ${scheme},
+        app_device_id: ${appId},
+        net_check: locked (tap RUN),
+      ];
+      document.getElementById("deviceBox").innerText=lines.join("\n");
+    }
+
+    function renderReport(d){
+      const u=t("UNKNOWN"), before=t("BEFORE");
+      const user=tg?.initDataUnsafe?.user;
+      const tgId = user?.id ? String(user.id) : u;
+      const tgUser = user?.username ? ("@" + user.username) : u;
+
+      const checklist=[
+        • Clear Telegram cache (guide),
+        • Remove large videos (guide),
+        • Keep 10–15% storage free,
+        • If latency high — switch network / reboot router
+      ];
+
+      const lines=[
+        product: Security Creator Report,
+        tg_id: ${tgId},
+        tg_username: ${tgUser},
+        ``,
+        ${t("NETWORK")},
+        online: ${navigator.onLine},
+        public_ip: ${d.publicIP || u},
+        latency_avg_ms: ${d.latencyMs!==null ? d.latencyMs : u},
+        ``,
+        ${t("STORAGE")},
+        free_storage: ${u},
+        app_cache: ${d.cacheBeforeMB.toFixed(2)} MB (${before}),
+        days_since_clean: ${d.daysNoClean===null ? u : d.daysNoClean},
+        runs_today: ${d.runsToday},
+        ``,
+        ${t("CLEANUP")},
+        cache_cleared: ${d.cacheClearedMB.toFixed(2)} MB,
+        temp_removed: ${d.tempRemovedMB.toFixed(2)} MB,
+        storage_freed: ${d.storageFreedMB.toFixed(2)} MB,
+        ``,
+        ${t("STATUS")},
+        scr_score: ${d.score}/100,
+        issues_found: ${d.issues.length},
+        issues: ${d.issues.length ? d.issues.join(", ") : "OK"},
+        ``,
+        ${t("CHECKLIST")},
+        ...checklist
+      ];
+
+      document.getElementById("reportBox").innerText=lines.join("\n");
+      document.getElementById("reportPanel").classList.remove("hidden");
+      document.getElementById("guidesPanel").classList.add("hidden");
+      document.getElementById("pillNet").innerText=`NET: OK`;
+    }
+
+    function renderGuides(){
+      document.getElementById("guidesBox").innerText=t("GUIDE_TEXT");
+      document.getElementById("guidesPanel").classList.remove("hidden");
+      document.getElementById("reportPanel").classList.add("hidden");
+    }
+
+    async function showRewardedAdMock(){ await new Promise(r=>setTimeout(r,900)); await new Promise(r=>setTimeout(r,1100)); return true; }
+
+    let busy=false;
+    const toggleBtn=document.getElementById("toggleBtn");
+    const statusText=document.getElementById("statusText");
+    function setStatusText(v){ statusText.innerText=v; }
+
+    async function runOnce(){
+      if(busy) return;
+      busy=true;
+
+      toggleBtn.innerText="ON";
+      setStatusText(t("LOADING_AD"));
+
+      fillCacheToMinimum(1.2);
+      const runsToday=incRunsToday();
+      simulateTempBytes();
+
+      const ok=await showRewardedAdMock();
+      if(!ok){ toggleBtn.innerText="OFF"; setStatusText(t("READY")); busy=false; return; }
+
+      setStatusText(t("RUNNING"));
+
+      const cacheBeforeMB=bytesToMB(approximateLocalStorageBytes());
+      const [publicIP, latencyMs] = await Promise.all([ fetchPublicIP(), measureLatencyMs(3) ]);
+
+      const {clearedBytes,tempBytes}=clearCacheAndTemp();
+
+Terry, [28.12.2025 14:31]
+const cacheClearedMB=bytesToMB(clearedBytes);
+      const tempRemovedMB=bytesToMB(tempBytes);
+      const storageFreedMB=cacheClearedMB+tempRemovedMB;
+
+      const daysNoClean=daysSinceLastClean();
+      const {score,issues}=computeScoreAndIssues({appCacheMB:cacheBeforeMB, daysNoClean, runsToday, latencyMs, ipOk:!!publicIP});
+
+      renderReport({runsToday, cacheBeforeMB, cacheClearedMB, tempRemovedMB, storageFreedMB, daysNoClean, publicIP, latencyMs, score, issues});
+
+      toggleBtn.innerText="OFF";
+      setStatusText(t("REPORT_READY"));
+      busy=false;
+    }
+
+    document.getElementById("lang").addEventListener("change",(e)=>{
+      const v=e.target.value;
+      if(!I18N[v]) return;
+      LANG=v; localStorage.setItem("scr_lang",LANG);
+      applyI18n(); renderDeviceBox(); setStatusText(t("READY"));
+    });
+
+    toggleBtn.addEventListener("click",()=> runOnce().catch(()=>{ toggleBtn.innerText="OFF"; setStatusText(t("READY")); busy=false; }));
+    document.getElementById("btnRunAgain").addEventListener("click",()=> runOnce().catch(()=>{}));
+    document.getElementById("btnGuides").addEventListener("click",()=> renderGuides());
+    document.getElementById("btnBack").addEventListener("click",()=>{
+      document.getElementById("guidesPanel").classList.add("hidden");
+      document.getElementById("reportPanel").classList.remove("hidden");
+    });
+
+    document.getElementById("lang").value=LANG;
+    applyI18n();
+    renderDeviceBox();
+    setStatusText(t("READY"));
+  </script>
+</body>
+</html>
